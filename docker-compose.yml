@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: ai_code_assistant_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_code_assistant
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ai_code_assistant_pg_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: ai_code_assistant_backend
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      JWT_SECRET: dev-secret-change-in-production
+      JWT_EXPIRES_IN: 7d
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: ai_code_assistant
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    container_name: ai_code_assistant_frontend
+    restart: unless-stopped
+    environment:
+      VITE_PROXY_TARGET: http://backend:3001
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  ai_code_assistant_pg_data:
